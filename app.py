@@ -51,29 +51,46 @@ def health():
 @app.post("/classify-image")
 async def classify(request: Request):
 
-    load_models()
+    try:
+        load_models()
 
-    data = await request.json()
-    image_base64 = data.get("image_base64")
+        data = await request.json()
+        image_base64 = data.get("image_base64")
 
-    if not image_base64:
-        raise HTTPException(status_code=400, detail="No image")
+        if not image_base64:
+            return {"error": "No image provided"}
 
-    img = Image.open(io.BytesIO(base64.b64decode(image_base64))).convert("RGB")
-    x = preprocess(img)
+        # Handle base64 prefix
+        if "," in image_base64:
+            image_base64 = image_base64.split(",")[1]
 
-    # Stage 1
-    p1 = model1.predict(x, verbose=0)
-    if np.argmax(p1) == 0:
-        return {"final": "Non snake image"}
+        image_bytes = base64.b64decode(image_base64)
+        img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
 
-    # Stage 2
-    p2 = model2.predict(x, verbose=0)
-    if np.argmax(p2) == 1:
-        return {"final": "Valid snake image"}
+        x = preprocess(img)
 
-    # Stage 3
-    p3 = model3.predict(x, verbose=0)
-    labels = ["Blur", "Dark", "Edited", "Noisy"]
+        # Stage 1
+        p1 = model1.predict(x, verbose=0)
+        idx1 = int(np.argmax(p1))
 
-    return {"final": f"Invalid snake image ({labels[np.argmax(p3)]})"}
+        if idx1 == 0:
+            return {"final": "Non snake image"}
+
+        # Stage 2
+        p2 = model2.predict(x, verbose=0)
+        idx2 = int(np.argmax(p2))
+
+        if idx2 == 1:
+            return {"final": "Valid snake image"}
+
+        # Stage 3
+        p3 = model3.predict(x, verbose=0)
+        idx3 = int(np.argmax(p3))
+
+        labels = ["Blur", "Dark", "Edited", "Noisy"]
+
+        return {"final": f"Invalid snake image ({labels[idx3]})"}
+
+    except Exception as e:
+        print("🔥 ERROR:", str(e))
+        return {"error": str(e)}
