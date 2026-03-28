@@ -1,4 +1,3 @@
-import os
 import base64
 import io
 import numpy as np
@@ -7,7 +6,10 @@ from PIL import Image
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
+import os
 os.environ["KERAS_BACKEND"] = "tensorflow"
+
+from keras.models import load_model
 
 app = FastAPI()
 
@@ -29,13 +31,12 @@ def load_models():
     global model1, model2, model3
 
     if model1 is None:
-        from keras.models import load_model
 
         print("Loading models...")
 
-        model1 = load_model(os.path.join(MODEL_DIR, "snake_vs_nonsnake_best.keras"), compile=False, safe_mode=False)
-        model2 = load_model(os.path.join(MODEL_DIR, "valid_vs_invalid_best.keras"), compile=False, safe_mode=False)
-        model3 = load_model(os.path.join(MODEL_DIR, "invalid_reason_best.keras"), compile=False, safe_mode=False)
+        model1 = load_model("models/snake_vs_nonsnake_best.keras", compile=False, safe_mode=False)
+        model2 = load_model("models/valid_vs_invalid_best.keras", compile=False, safe_mode=False)
+        model3 = load_model( "models/invalid_reason_best.keras", compile=False, safe_mode=False)
 
         print("✅ Models loaded")
 
