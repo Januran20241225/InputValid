@@ -1,6 +1,7 @@
 fastapi
 uvicorn
-keras
+keras==3.0.5
+tensorflow-cpu
 numpy
 pillow
 h5py
